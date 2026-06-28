@@ -73,17 +73,75 @@ Kevin De Bruyne in soccer (£104M contract).
 - SHAP (TreeExplainer)
 - Ridge regression (system adjustment)
 
-## Pipeline
-feature_pipeline.py     → Phase 1: data ingestion & engineering
+## Repository Structure
 
-label_pipeline.py       → Phase 2: All-Star, trade & salary labels
+### Python Scripts (run in this order)
 
-add_salaries.py         → Phase 2: salary data from Kaggle dataset
+| File | Phase | Description |
+|---|---|---|
+| `feature_pipeline.py` | 1 | Pulls 5 seasons of NBA player and team stats via nba_api. Engineers player feature vectors (PLUS_MINUS, PTS, AST, REB, STL, BLK, TOV, MIN) and team system vectors (pace, defensive score, win percentage). Applies z-score normalization by season to remove era bias. Clusters teams into 6 play-style archetypes using K-Means. Outputs nba_feature_matrix.csv |
+| `label_pipeline.py` | 2 | Loads the feature matrix and fills three label columns. LABEL_ALLSTAR: matches players against hardcoded All-Star rosters (2018-2023). LABEL_WS48_CHG: identifies players who changed teams between seasons and calculates performance change. LABEL_SALARY: seeds salary data for key players. Outputs nba_feature_matrix_labeled.csv |
+| `add_salaries.py` | 2 | Expands salary coverage from 67 rows to 1,930 rows using the Kaggle NBA Player Stats and Salaries 2010-2025 dataset. Applies Unicode normalization to fix European player name mismatches (e.g. Jokić → Jokic). Requires NBA_Player_Stats_and_Salaries_2010-2025.csv in the project folder |
+| `trade_model_v2.py` | 3 | Trains an XGBoost regression model on 561 real trade observations to predict post-trade performance change. Engineers three role-aware features: USAGE_PROXY (ball dominance), EFFICIENCY (scoring per turnover), DEFENSIVE_ROLE (steals + blocks). Adds roster gap penalty to discourage redundant signings. Replaces broken K-Means archetype with interpretable TEAM_PACE_SCORE and TEAM_DEF_SCORE. Ranks all 30 teams for any player. Outputs trade_model_v2.pkl and trade_rankings CSV files |
+| `shap_model.py` | 4 | Trains an XGBoost classifier to predict All-Star selection using scale_pos_weight to handle 5% class imbalance. Achieves ROC-AUC 0.980 and Recall 0.909 on held-out 2022-23 season. Applies TreeSHAP to decompose every prediction into per-feature contributions. Generates a development report for all 2,146 players identifying their biggest skill gap and strongest attribute. This forward-looking SHAP application is the novel research contribution. Outputs shap_model.pkl and shap_development_reports.csv |
+| `salary_model.py` | 5 | The most commercially novel component. Fits Ridge regression on team features to estimate how much of each player's PLUS_MINUS is explained by team context (44.4%). Computes system-adjusted residual (SYS_ADJ) as a new feature representing true individual contribution. Trains XGBoost salary regression achieving Test R² 0.551. Applies SHAP to explain which stats drive underpayment or overpayment gaps. Generates agent-ready salary fairness reports with dollar gap and one-paragraph negotiation talking point. Outputs salary_model.pkl and salary_fairness_reports.csv |
+| `validation.py` | 6 | Four-part validation suite. Part A backtests the trade model against 8 real 2022-23 trades — achieves 88% direction accuracy. Part B validates SHAP model prospectively — high-probability players become All-Stars at 6.5% vs 0.2% for low-probability players (32x lift). Part C analyzes system adjustment distribution across 1,930 salary rows. Part D prints the full MIT Sloan research paper outline with actual results filled in |
 
-trade_model_v2.py       → Phase 3: trade compatibility model
+### Data Files (not tracked in Git — download separately)
 
-shap_model.py           → Phase 4: SHAP development model
+| File | Source | Description |
+|---|---|---|
+| `NBA_Player_Stats_and_Salaries_2010-2025.csv` | Kaggle | 7,298 rows of player stats and salary data covering 2010-2025. Required by add_salaries.py. Download from Kaggle and place in project folder |
+| `nba_feature_matrix.csv` | Generated | Output of feature_pipeline.py. 2,146 player-season rows with normalized features and empty label columns |
+| `nba_feature_matrix_labeled.csv` | Generated | Output of label_pipeline.py and add_salaries.py. Same 2,146 rows with all three labels filled |
+| `shap_development_reports.csv` | Generated | Output of shap_model.py. One row per player with All-Star probability, per-feature SHAP values, biggest gap, and biggest strength |
+| `salary_fairness_reports.csv` | Generated | Output of salary_model.py. One row per player with actual salary, system adjustment score, per-feature SHAP values, and agent talking point |
 
-salary_model.py         → Phase 5: salary fairness model
+### Model Files (not tracked in Git — generated locally)
 
-validation.py           → Phase 6: backtesting & validation
+| File | Description |
+|---|---|
+| `trade_model_v2.pkl` | Trained XGBoost trade compatibility model |
+| `shap_model.pkl` | Trained XGBoost All-Star classifier with TreeExplainer |
+| `salary_model.pkl` | Trained XGBoost salary regression with Ridge system adjuster |
+
+## Setup Instructions
+
+**1. Clone the repository**
+```bash
+git clone https://github.com/YOUR_USERNAME/NBA-SHAP-Player-Valuation.git
+cd NBA-SHAP-Player-Valuation
+```
+
+**2. Install dependencies**
+```bash
+pip install nba_api pandas scikit-learn xgboost shap "numpy<2"
+```
+
+**3. Download the Kaggle salary dataset**
+Search "NBA Player Stats and Salaries 2010-2025" on Kaggle.
+Download and place `NBA_Player_Stats_and_Salaries_2010-2025.csv` 
+in the project folder.
+
+**4. Run the pipeline in order**
+```bash
+python feature_pipeline.py      # ~3 minutes (API calls)
+python label_pipeline.py        # ~2 minutes (API calls)
+python add_salaries.py          # instant
+python trade_model_v2.py        # instant
+python shap_model.py            # instant
+python salary_model.py          # instant
+python validation.py            # instant
+```
+
+**5. Add a .gitignore file**
+Create a file called `.gitignore` in your project folder 
+with this content so large files don't get pushed to GitHub:
+
+```
+*.pkl
+*.csv
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+```
