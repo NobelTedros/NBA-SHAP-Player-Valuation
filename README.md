@@ -74,3 +74,16 @@ Kevin De Bruyne in soccer (£104M contract).
 - Ridge regression (system adjustment)
 
 ## Pipeline
+feature_pipeline.py     → Phase 1: data ingestion & engineering
+
+label_pipeline.py       → Phase 2: All-Star, trade & salary labels
+
+add_salaries.py         → Phase 2: salary data from Kaggle dataset
+
+trade_model_v2.py       → Phase 3: trade compatibility model
+
+shap_model.py           → Phase 4: SHAP development model
+
+salary_model.py         → Phase 5: salary fairness model
+
+validation.py           → Phase 6: backtesting & validation
