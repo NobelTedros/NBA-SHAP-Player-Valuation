@@ -109,7 +109,7 @@ Kevin De Bruyne in soccer (£104M contract).
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/YOUR_USERNAME/NBA-SHAP-Player-Valuation.git
+git clone https://github.com/NobelTedros/NBA-SHAP-Player-Valuation.git
 cd NBA-SHAP-Player-Valuation
 ```
 
