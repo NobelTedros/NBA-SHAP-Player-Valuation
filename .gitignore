@@ -1,0 +1,6 @@
+*.pkl
+*.csv
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+NBA_Player_Stats_and_Salaries_2010-2025.csv
