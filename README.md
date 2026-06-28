@@ -133,15 +133,4 @@ python shap_model.py            # instant
 python salary_model.py          # instant
 python validation.py            # instant
 ```
-
-**5. Add a .gitignore file**
-Create a file called `.gitignore` in your project folder 
-with this content so large files don't get pushed to GitHub:
-
-```
-*.pkl
-*.csv
-__pycache__/
-*.pyc
-.ipynb_checkpoints/
 ```
